@@ -59,6 +59,41 @@ func (lc *LDAPClient) Close() {
 	}
 }
 
+func (lc *LDAPClient) SearchUser(username string) (map[string]string, error) {
+	err := lc.Connect()
+	if err != nil {
+		return nil, err
+	}
+
+	searchRequest := ldap.NewSearchRequest(
+		lc.Base,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		fmt.Sprintf(lc.UserFilter, username),
+		lc.Attributes,
+		nil,
+	)
+
+	sr, err := lc.Conn.Search(searchRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(sr.Entries) < 1 {
+		return nil, errors.New("User does not exist")
+	}
+
+	if len(sr.Entries) > 1 {
+		return nil, errors.New("Too many entries returned")
+	}
+
+	user := map[string]string{}
+	for _, attr := range lc.Attributes {
+		user[attr] = sr.Entries[0].GetAttributeValue(attr)
+	}
+
+	return user, nil
+}
+
 // Authenticate authenticates the user against the ldap backend
 func (lc *LDAPClient) Authenticate(username, password string) (bool, map[string]string, error) {
 	err := lc.Connect()
