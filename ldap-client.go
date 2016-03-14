@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-
 	"gopkg.in/ldap.v2"
 )
 
@@ -178,4 +177,39 @@ func (lc *LDAPClient) GetGroupsOfUser(username string) ([]string, error) {
 		groups = append(groups, entry.GetAttributeValue("cn"))
 	}
 	return groups, nil
+}
+
+func (lc *LDAPClient) FindUsers(search string) ([]map[string]string, error) {
+	err := lc.Connect()
+	if err != nil {
+		return nil, err
+	}
+
+	searchRequest := ldap.NewSearchRequest(
+		lc.Base,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		fmt.Sprintf(lc.UserFilter, search),
+		lc.Attributes,
+		nil,
+	)
+
+	sr, err := lc.Conn.Search(searchRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(sr.Entries) < 1 {
+		return nil, errors.New("User does not exist")
+	}
+
+	users := []map[string]string{}
+	for _, ldap_user := range sr.Entries {
+		user := make(map[string]string)
+		for _, attr := range lc.Attributes {
+			user[attr] = ldap_user.GetAttributeValue(attr)
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
 }
