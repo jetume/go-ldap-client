@@ -6,6 +6,8 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"log"
+	"time"
 	"gopkg.in/ldap.v2"
 )
 
@@ -73,6 +75,15 @@ func (lc *LDAPClient) SearchUser(username string) (map[string]string, error) {
 	)
 
 	sr, err := lc.Conn.Search(searchRequest)
+	
+	retry := 3
+	for err != nil && retry <= 3 {
+	  sr, err = lc.Conn.Search(searchRequest)
+	  log.Printf("Retrying: [%s:%d] \n", searchRequest, retry)
+	  time.Sleep(time.Second * time.Duration(retry))
+	  retry++
+	}
+	
 	if err != nil {
 		return nil, err
 	}
@@ -169,6 +180,15 @@ func (lc *LDAPClient) GetGroupsOfUser(username string) ([]string, error) {
 		nil,
 	)
 	sr, err := lc.Conn.Search(searchRequest)
+	
+	retry := 3
+	for err != nil && retry <= 3 {
+	  sr, err = lc.Conn.Search(searchRequest)
+	  log.Printf("Retrying: [%s:%d] \n", searchRequest, retry)
+	  time.Sleep(time.Second * time.Duration(retry))
+	  retry++
+	}
+	
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +200,7 @@ func (lc *LDAPClient) GetGroupsOfUser(username string) ([]string, error) {
 }
 
 func (lc *LDAPClient) FindUsers(search string) ([]map[string]string, error) {
-	err := lc.Connect()
+  err := lc.Connect()
 	if err != nil {
 		return nil, err
 	}
@@ -194,6 +214,15 @@ func (lc *LDAPClient) FindUsers(search string) ([]map[string]string, error) {
 	)
 
 	sr, err := lc.Conn.Search(searchRequest)
+	
+	retry := 3
+	for err != nil && retry <= 3 {
+	  sr, err = lc.Conn.Search(searchRequest)
+	  log.Printf("Retrying: [%s:%d] \n", searchRequest, retry)
+	  time.Sleep(time.Second * time.Duration(retry))
+	  retry++
+	}
+	
 	if err != nil {
 		return nil, err
 	}
@@ -204,11 +233,11 @@ func (lc *LDAPClient) FindUsers(search string) ([]map[string]string, error) {
 
 	users := []map[string]string{}
 	for _, ldap_user := range sr.Entries {
-		user := make(map[string]string)
-		for _, attr := range lc.Attributes {
-			user[attr] = ldap_user.GetAttributeValue(attr)
-		}
-		users = append(users, user)
+	  user := make(map[string]string)
+	  for _, attr := range lc.Attributes {
+  		user[attr] = ldap_user.GetAttributeValue(attr)
+  	}
+	  users = append(users, user)
 	}
 
 	return users, nil
