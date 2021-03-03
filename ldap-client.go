@@ -78,6 +78,13 @@ func (lc *LDAPClient) SearchUser(username string) (map[string]string, error) {
 		nil,
 	)
 
+	if lc.BindDN != "" && lc.BindPassword != "" {
+		err := lc.Conn.Bind(lc.BindDN, lc.BindPassword)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	sr, err := lc.Conn.Search(searchRequest)
 	
 	retry := 3
@@ -183,6 +190,14 @@ func (lc *LDAPClient) GetGroupsOfUser(username string) ([]string, error) {
 		[]string{"cn"}, // can it be something else than "cn"?
 		nil,
 	)
+
+	if lc.BindDN != "" && lc.BindPassword != "" {
+		err := lc.Conn.Bind(lc.BindDN, lc.BindPassword)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	sr, err := lc.Conn.Search(searchRequest)
 	
 	retry := 3
@@ -216,6 +231,13 @@ func (lc *LDAPClient) FindUsers(search string) ([]map[string]string, error) {
 		lc.Attributes,
 		nil,
 	)
+
+	if lc.BindDN != "" && lc.BindPassword != "" {
+		err := lc.Conn.Bind(lc.BindDN, lc.BindPassword)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	sr, err := lc.Conn.Search(searchRequest)
 	
